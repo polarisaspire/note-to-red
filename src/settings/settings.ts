@@ -2,8 +2,12 @@ import { Theme } from '../themeManager';
 import  RedPlugin  from '../main';
 import { EventEmitter } from 'events';
 interface RedSettings {
-    donateCount?: number;
-    lastDonatePrompt?: number;
+    showCover?: boolean;
+    coverTitle?: string;
+    coverFirstFontSize?: number;
+    coverBodyFontSize?: number;
+    coverOverlayOpacity?: number;
+    coverBoxOffsetY?: number;
     templateId: string;
     themeId: string;
     fontFamily: string;
@@ -31,6 +35,12 @@ interface RedSettings {
 }
 
 export const DEFAULT_SETTINGS: RedSettings = {
+    showCover: false,
+    coverTitle: '',
+    coverFirstFontSize: 18,
+    coverBodyFontSize: 28,
+    coverOverlayOpacity: 35,
+    coverBoxOffsetY: 0,
     templateId: 'default',
     themeId: 'default',
     fontFamily: 'Optima-Regular, Optima, PingFangSC-light, PingFangTC-light, "PingFang SC"',

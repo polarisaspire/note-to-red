@@ -19,7 +19,38 @@ export class DefaultTemplate implements ImgTemplate {
     render(element: HTMLElement) {
         const sections = element.querySelectorAll('.red-content-section');
         const settings = this.settingsManager.getSettings();
-        
+
+        // 封面标题编辑
+        const coverTitle = element.querySelector('.red-cover-title') as HTMLElement | null;
+        if (coverTitle) {
+            coverTitle.addEventListener('click', () => this.handleCoverTitleEdit(coverTitle));
+        }
+
+        // 封面字号控件
+        element.querySelectorAll('.red-cover-size-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const el = btn as HTMLElement;
+                const target = el.dataset.target;
+                const action = el.dataset.action;
+                const s = this.settingsManager.getSettings();
+                if (target === 'first') {
+                    const cur = s.coverFirstFontSize ?? 18;
+                    await this.settingsManager.updateSettings({ coverFirstFontSize: action === 'inc' ? cur + 1 : Math.max(10, cur - 1) });
+                } else if (target === 'body') {
+                    const cur = s.coverBodyFontSize ?? 28;
+                    await this.settingsManager.updateSettings({ coverBodyFontSize: action === 'inc' ? cur + 1 : Math.max(10, cur - 1) });
+                } else if (target === 'opacity') {
+                    const cur = s.coverOverlayOpacity ?? 35;
+                    await this.settingsManager.updateSettings({ coverOverlayOpacity: action === 'inc' ? Math.min(100, cur + 5) : Math.max(0, cur - 5) });
+                } else if (target === 'offsetY') {
+                    const cur = s.coverBoxOffsetY ?? 0;
+                    await this.settingsManager.updateSettings({ coverBoxOffsetY: action === 'inc' ? cur + 10 : cur - 10 });
+                }
+                await this.onSettingsUpdate();
+            });
+        });
+
         sections.forEach(section => {
             // 获取已有的头部和页脚元素
             const header = element.querySelector('.red-preview-header');
@@ -250,6 +281,28 @@ export class DefaultTemplate implements ImgTemplate {
         input.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
                 await handleBlur();
+            }
+        });
+    }
+
+    private async handleCoverTitleEdit(element: HTMLElement) {
+        const current = this.settingsManager.getSettings().coverTitle || '';
+        const textarea = document.createElement('textarea');
+        textarea.value = current;
+        textarea.className = 'red-cover-edit-textarea';
+        textarea.placeholder = '输入封面标题\n换行分隔多行\n第一行高亮显示';
+        element.replaceWith(textarea);
+        textarea.focus();
+
+        const handleBlur = async () => {
+            await this.settingsManager.updateSettings({ coverTitle: textarea.value.trim() });
+            await this.onSettingsUpdate();
+        };
+
+        textarea.addEventListener('blur', handleBlur);
+        textarea.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                textarea.blur();
             }
         });
     }

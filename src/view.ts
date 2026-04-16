@@ -2,7 +2,6 @@ import { ItemView, WorkspaceLeaf, MarkdownRenderer, TFile, Notice, setIcon } fro
 import { RedConverter } from './converter';
 import { DownloadManager } from './downloadManager';
 import type { ThemeManager } from './themeManager';
-import { DonateManager } from './donateManager';
 import type { SettingsManager } from './settings/settings';
 import { ClipboardManager } from './clipboardManager';
 import { ImgTemplateManager } from './imgTemplateManager';
@@ -18,13 +17,9 @@ export class RedView extends ItemView {
     private isPreviewLocked: boolean = false;
     private currentImageIndex: number = 0;
     private backgroundManager: BackgroundManager;
-    // 添加捐赠提醒相关属性
-    private donateCount: number = 0;
-    private lastDonatePrompt: number = 0;
-    private MAX_COUNT_BEFORE_PROMPT: number = 5; // 每使用5次提醒一次
-
     // UI 元素
     private lockButton: HTMLButtonElement;
+    private coverButton: HTMLButtonElement;
     private copyButton: HTMLButtonElement;
     private customTemplateSelect: HTMLElement;
     private customThemeSelect: HTMLElement;
@@ -58,10 +53,6 @@ export class RedView extends ItemView {
             this.themeManager
         );
 
-        // 从设置中恢复捐赠计数和上次提示时间
-        const settings = this.settingsManager.getSettings();
-        this.donateCount = settings.donateCount || 0;
-        this.lastDonatePrompt = settings.lastDonatePrompt || 0;
     }
 
     getViewType() {
@@ -97,6 +88,7 @@ export class RedView extends ItemView {
         const controlsGroup = toolbar.createEl('div', { cls: 'red-controls-group' });
 
         await this.initializeLockButton(controlsGroup);
+        await this.initializeCoverButton(controlsGroup);
         await this.initializeTemplateSelect(controlsGroup);
         await this.initializeThemeSelect(controlsGroup);
         await this.initializeFontSelect(controlsGroup);
@@ -167,6 +159,13 @@ export class RedView extends ItemView {
             (section as HTMLElement).classList.toggle('red-section-active', i === this.currentImageIndex);
         });
 
+        // 仅当封面页激活时显示遮罩
+        const overlay = this.previewEl.querySelector('.red-cover-overlay') as HTMLElement | null;
+        if (overlay) {
+            const isCover = sections[this.currentImageIndex]?.classList.contains('red-cover-section');
+            overlay.style.display = isCover ? 'block' : 'none';
+        }
+
         this.navigationButtons.prev.classList.toggle('red-nav-hidden', this.currentImageIndex === 0);
         this.navigationButtons.next.classList.toggle('red-nav-hidden', this.currentImageIndex === sections.length - 1);
         this.navigationButtons.indicator.textContent = `${this.currentImageIndex + 1}/${sections.length}`;
@@ -188,7 +187,6 @@ export class RedView extends ItemView {
 
         this.initializeHelpButton(bottomControlsGroup);
         this.initializeBackgroundButton(bottomControlsGroup);
-        this.initializeDonateButton(bottomControlsGroup);
         this.initializeExportButtons(bottomControlsGroup);
     }
 
@@ -204,6 +202,25 @@ export class RedView extends ItemView {
     // #endregion
 
     // #region 控件初始化
+    private async initializeCoverButton(parent: HTMLElement) {
+        this.coverButton = parent.createEl('button', {
+            cls: 'red-cover-button',
+            text: '封面',
+            attr: { 'aria-label': '切换封面页' }
+        });
+
+        const settings = this.settingsManager.getSettings();
+        this.coverButton.classList.toggle('red-cover-active', !!settings.showCover);
+
+        this.coverButton.addEventListener('click', async () => {
+            const current = this.settingsManager.getSettings().showCover;
+            await this.settingsManager.updateSettings({ showCover: !current });
+            this.coverButton.classList.toggle('red-cover-active', !current);
+            this.currentImageIndex = 0;
+            await this.updatePreview();
+        });
+    }
+
     private async initializeLockButton(parent: HTMLElement) {
         this.lockButton = parent.createEl('button', {
             cls: 'red-lock-button',
@@ -326,20 +343,7 @@ export class RedView extends ItemView {
                 4. 长文优化：内容较多的章节可调小字号至14-16px后单独导出
                 5. 批量操作：保持统一字号时，用【导出全部页】批量生成
                 6. 模板切换：顶部选择器可切换不同视觉风格
-                7. 实时编辑：解锁状态(🔓)下编辑文档即时预览效果
-                8. 支持创作：点击❤️关于作者可进行打赏支持`
-        });
-    }
-
-    private initializeDonateButton(parent: HTMLElement) {
-        const likeButton = parent.createEl('button', { cls: 'red-like-button' });
-        likeButton.createEl('span', {
-            text: '❤️',
-            attr: { style: 'margin-right: 4px' }
-        });
-        likeButton.createSpan({ text: '关于作者' });
-        likeButton.addEventListener('click', () => {
-            DonateManager.showDonateModal(this.containerEl);
+                7. 实时编辑：解锁状态(🔓)下编辑文档即时预览效果`
         });
     }
 
@@ -352,11 +356,6 @@ export class RedView extends ItemView {
 
         singleDownloadButton.addEventListener('click', async () => {
             if (this.previewEl) {
-                // 检查是否需要显示捐赠弹窗
-                if (this.shouldShowDonatePrompt()) {
-                    DonateManager.showDonateModal(this.containerEl);
-                }
-
                 singleDownloadButton.disabled = true;
                 singleDownloadButton.setText('导出中...');
 
@@ -382,11 +381,6 @@ export class RedView extends ItemView {
 
         this.copyButton.addEventListener('click', async () => {
             if (this.previewEl) {
-                // 检查是否需要显示捐赠弹窗
-                if (this.shouldShowDonatePrompt()) {
-                    DonateManager.showDonateModal(this.containerEl);
-                }
-
                 this.copyButton.disabled = true;
                 this.copyButton.setText('导出中...');
 
@@ -412,11 +406,6 @@ export class RedView extends ItemView {
                 copyButton.addEventListener('click', async () => {
                     copyButton.disabled = true;
                     try {
-                        // 检查是否需要显示捐赠弹窗
-                        if (this.shouldShowDonatePrompt()) {
-                            DonateManager.showDonateModal(this.containerEl);
-                        }
-
                         await ClipboardManager.copyImageToClipboard(this.previewEl);
                         new Notice('图片已复制到剪贴板');
                     } catch (error) {
@@ -705,36 +694,4 @@ export class RedView extends ItemView {
     // #endregion
 
 
-    // 检查是否需要显示捐赠弹窗
-    private shouldShowDonatePrompt(): boolean {
-        // 增加使用次数
-        this.donateCount++;
-
-        // 保存到设置中
-        if (this.settingsManager) {
-            const settings = this.settingsManager.getSettings();
-            settings.donateCount = this.donateCount;
-            this.settingsManager.updateSettings(settings);
-        }
-
-        const now = Date.now();
-        const oneDayInMs = 24 * 60 * 60 * 1000; // 一天的毫秒数
-
-        // 如果使用次数达到阈值且24小时内未显示过
-        if (this.donateCount % this.MAX_COUNT_BEFORE_PROMPT === 0 && now - this.lastDonatePrompt > oneDayInMs) {
-            // 更新上次显示时间
-            this.lastDonatePrompt = now;
-
-            // 保存到设置中
-            if (this.settingsManager) {
-                const settings = this.settingsManager.getSettings();
-                settings.lastDonatePrompt = this.lastDonatePrompt;
-                this.settingsManager.updateSettings(settings);
-            }
-
-            return true;
-        }
-
-        return false;
-    }
 }

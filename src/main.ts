@@ -3,7 +3,6 @@ import { RedView, VIEW_TYPE_RED } from './view';  // 暂时改回原来的导入
 import { ThemeManager } from './themeManager';
 import { SettingsManager } from './settings/settings';
 import { RedConverter } from './converter';  // 暂时使用原来的转换器
-import { DonateManager } from './donateManager';
 import { RedSettingTab } from './settings/SettingTab';
 
 export default class RedPlugin extends Plugin {
@@ -20,8 +19,6 @@ export default class RedPlugin extends Plugin {
 
     // 初始化转换器
     RedConverter.initialize(this.app, this);
-
-    DonateManager.initialize(this.app, this);
 
     // 注册视图
     this.registerView(

@@ -1,0 +1,160 @@
+/* 封面遮罩 — 绝对定位覆盖整张白色卡片，压暗背景 */
+.red-cover-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: inherit;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* 遮罩之上的内容层 */
+.red-image-preview .red-preview-header,
+.red-image-preview .red-preview-content,
+.red-image-preview .red-preview-footer {
+    position: relative;
+    z-index: 1;
+}
+
+/* 封面区域基础样式（不设 display，由导航状态控制显隐） */
+.red-cover-section {
+    flex: 1;
+    flex-direction: column;
+    margin: 0 !important;
+}
+
+/* 激活时才设 flex，覆盖 .red-section-active { display: block } */
+.red-cover-section.red-section-active {
+    display: flex !important;
+}
+
+.red-cover-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px;
+}
+
+.red-cover-box {
+    background: rgba(50, 52, 58, 0.88);
+    border-radius: 16px;
+    padding: 36px 24px;
+    width: 100%;
+    text-align: center;
+}
+
+.red-cover-title {
+    cursor: pointer;
+    line-height: 1.5;
+    user-select: none;
+}
+
+.red-cover-line-first {
+    display: block;
+    font-weight: 800;
+    color: #FFD700;
+    text-shadow:
+        -2px -2px 0 #000,
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000;
+}
+
+.red-cover-line-rest {
+    display: block;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow:
+        -2px -2px 0 #000,
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000;
+}
+
+.red-cover-edit-textarea {
+    width: 100%;
+    min-height: 90px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    padding: 8px;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    line-height: 1.6;
+}
+
+/* 字号控件（导出时通过 filter 排除） */
+.red-cover-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 0 4px;
+}
+
+.red-cover-size-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.red-cover-size-btn {
+    width: 20px;
+    height: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.red-cover-size-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.red-cover-size-val {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.9);
+    min-width: 20px;
+    text-align: center;
+}
+
+.red-cover-size-sep {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 12px;
+    margin: 0 4px;
+}
+
+/* 封面开关按钮 */
+.red-cover-button {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.red-cover-button:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.red-cover-button.red-cover-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}

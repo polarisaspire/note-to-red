@@ -77,6 +77,28 @@ export class RedConverter {
         const contentContainer = document.createElement('div');
         contentContainer.className = 'red-content-container';
         
+        // 封面 section
+        const coverSettings = this.plugin?.settingsManager?.getSettings();
+        // 清除旧遮罩
+        imagePreview.querySelector('.red-cover-overlay')?.remove();
+
+        if (coverSettings?.showCover) {
+            const opacity = (coverSettings.coverOverlayOpacity ?? 35) / 100;
+            const overlay = document.createElement('div');
+            overlay.className = 'red-cover-overlay';
+            overlay.style.background = `rgba(0,0,0,${opacity})`;
+            overlay.style.display = 'none'; // 默认隐藏，由导航状态控制
+            imagePreview.insertBefore(overlay, imagePreview.firstChild);
+
+            contentContainer.appendChild(this.createCoverSection(
+                coverSettings.coverTitle || '',
+                coverSettings.coverFirstFontSize ?? 18,
+                coverSettings.coverBodyFontSize ?? 28,
+                coverSettings.coverOverlayOpacity ?? 35,
+                coverSettings.coverBoxOffsetY ?? 0
+            ));
+        }
+
         // 处理每个二级标题及其内容
         headers.forEach((header, index) => {
             const section = this.createContentSection(header, index);
@@ -102,6 +124,90 @@ export class RedConverter {
             bubbles: true 
         });
         element.dispatchEvent(copyEvent);
+    }
+
+    private static createCoverSection(coverTitle: string, firstSize: number, bodySize: number, overlayOpacity: number, offsetY: number): HTMLElement {
+        const section = document.createElement('section');
+        section.className = 'red-content-section red-cover-section';
+        section.setAttribute('data-index', 'cover');
+
+        // 内容主体
+        const body = document.createElement('div');
+        body.className = 'red-cover-body';
+
+        const box = document.createElement('div');
+        box.className = 'red-cover-box';
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'red-cover-title';
+        titleEl.setAttribute('title', '点击编辑封面标题');
+
+        const lines = (coverTitle || '点击输入标题').split('\n').filter(l => l.trim());
+        lines.forEach((line, i) => {
+            if (i > 0) titleEl.appendChild(document.createElement('br'));
+            const span = document.createElement('span');
+            span.className = i === 0 ? 'red-cover-line-first' : 'red-cover-line-rest';
+            span.style.fontSize = `${i === 0 ? firstSize : bodySize}px`;
+            span.textContent = line;
+            titleEl.appendChild(span);
+        });
+
+        box.appendChild(titleEl);
+        if (offsetY !== 0) box.style.marginTop = `${offsetY}px`;
+        body.appendChild(box);
+        section.appendChild(body);
+
+        // 字号控件（导出时隐藏）
+        const controls = document.createElement('div');
+        controls.className = 'red-cover-controls red-no-export';
+
+        const addSizeGroup = (label: string, target: string, val: number) => {
+            const lbl = document.createElement('span');
+            lbl.className = 'red-cover-size-label';
+            lbl.textContent = label;
+
+            const dec = document.createElement('button');
+            dec.className = 'red-cover-size-btn';
+            dec.dataset.target = target;
+            dec.dataset.action = 'dec';
+            dec.textContent = '−';
+
+            const display = document.createElement('span');
+            display.className = 'red-cover-size-val';
+            display.dataset.target = target;
+            display.textContent = String(val);
+
+            const inc = document.createElement('button');
+            inc.className = 'red-cover-size-btn';
+            inc.dataset.target = target;
+            inc.dataset.action = 'inc';
+            inc.textContent = '+';
+
+            controls.appendChild(lbl);
+            controls.appendChild(dec);
+            controls.appendChild(display);
+            controls.appendChild(inc);
+        };
+
+        addSizeGroup('首行', 'first', firstSize);
+        const sep1 = document.createElement('span');
+        sep1.className = 'red-cover-size-sep';
+        sep1.textContent = '|';
+        controls.appendChild(sep1);
+        addSizeGroup('正文', 'body', bodySize);
+        const sep2 = document.createElement('span');
+        sep2.className = 'red-cover-size-sep';
+        sep2.textContent = '|';
+        controls.appendChild(sep2);
+        addSizeGroup('遮罩', 'opacity', overlayOpacity);
+        const sep3 = document.createElement('span');
+        sep3.className = 'red-cover-size-sep';
+        sep3.textContent = '|';
+        controls.appendChild(sep3);
+        addSizeGroup('位置', 'offsetY', offsetY);
+
+        section.appendChild(controls);
+        return section;
     }
 
         private static createContentSection(header: Element, index: number): HTMLElement | null {

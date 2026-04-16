@@ -3,19 +3,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 12px 3px 12px;
+    padding: 4px 12px 0 12px;
     line-height: normal;
 }
 
 .red-user-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
 }
 
 .red-user-avatar {
-    width: 42px;
-    height: 42px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     overflow: hidden;
     cursor: pointer;
@@ -43,8 +43,14 @@
 }
 
 .red-avatar-upload-icon {
-    font-size: 20px;
+    font-size: 14px;
     opacity: 0.6;
+}
+
+.red-verified-icon svg {
+    width: 13px;
+    height: 13px;
+    vertical-align: middle;
 }
 
 .red-avatar-placeholder:hover {
@@ -68,21 +74,21 @@
 }
 
 .red-user-name {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-normal);
     cursor: pointer;
 }
 
 .red-user-id {
-    font-size: 14px;
+    font-size: 11px;
     color: var(--text-muted);
     cursor: pointer;
 }
 
 .red-user-right {
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 11px;
 }
 
 /* 编辑输入框样式 */

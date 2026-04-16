@@ -8,8 +8,16 @@ export class DownloadManager {
             quality: 1,
             pixelRatio: 4,
             skipFonts: false,
-            // 添加过滤器，确保所有元素都被包含
             filter: (node: Node) => {
+                if (node instanceof HTMLElement) {
+                    if (node.classList.contains('red-no-export')) return false;
+                    if (node.classList.contains('red-section-hidden')) return false;
+                    // 封面 section 在非封面页时也需要排除
+                    if (
+                        node.classList.contains('red-cover-section') &&
+                        !node.classList.contains('red-section-visible')
+                    ) return false;
+                }
                 return true;
             },
             // 处理图片加载错误
@@ -46,10 +54,15 @@ export class DownloadManager {
                 sections[i].classList.remove(HIDDEN_CLASS);
                 sections[i].classList.add(VISIBLE_CLASS);
 
+                // 同步封面遮罩显隐
+                const imageElement = element.querySelector<HTMLElement>('.red-image-preview')!;
+                const overlay = imageElement.querySelector<HTMLElement>('.red-cover-overlay');
+                if (overlay) {
+                    overlay.style.display = sections[i].classList.contains('red-cover-section') ? 'block' : 'none';
+                }
+
                 // 确保浏览器完成重绘并等待资源加载
                 await new Promise(resolve => setTimeout(resolve, 300));
-
-                const imageElement = element.querySelector<HTMLElement>('.red-image-preview')!;
 
                 try {
                     const blob = await htmlToImage.toBlob(imageElement, this.getExportConfig(imageElement));
@@ -116,6 +129,13 @@ export class DownloadManager {
             const imageElement = element.querySelector('.red-image-preview') as HTMLElement;
             if (!imageElement) {
                 throw new Error('找不到预览区域');
+            }
+
+            // 同步封面遮罩显隐
+            const activeSection = imageElement.querySelector<HTMLElement>('.red-section-active, .red-content-section');
+            const overlay = imageElement.querySelector<HTMLElement>('.red-cover-overlay');
+            if (overlay && activeSection) {
+                overlay.style.display = activeSection.classList.contains('red-cover-section') ? 'block' : 'none';
             }
 
             // 确保浏览器完成重绘并等待资源加载
